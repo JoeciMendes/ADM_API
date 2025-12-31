@@ -5,7 +5,7 @@ import BrutalCard from '../components/BrutalCard';
 import BrutalButton from '../components/BrutalButton';
 import { supabase } from '../services/supabase';
 import { DashboardView, RequestEntry } from '../types';
-import { getDashboardInsights } from '../services/geminiService';
+// import { getDashboardInsights } from '../services/geminiService';
 
 interface DashboardPageProps {
   user: string;
@@ -30,7 +30,7 @@ const RECENT_TASKS = [
 ];
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ user, activeView, onViewChange, onLogout }) => {
-  const [aiInsight, setAiInsight] = useState('BUSCANDO INSIGHTS DO SISTEMA...');
+  const [aiInsight, setAiInsight] = useState('SISTEMA OPERACIONAL: MONITORAMENTO ATIVO');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [requestsList, setRequestsList] = useState<RequestEntry[]>([]);
@@ -145,11 +145,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user, activeView, onViewC
   };
 
   const fetchInsight = async () => {
-    setIsRefreshing(true);
-    const stats = `O tráfego atingiu o pico de 890 unidades na sexta-feira. Eficiência atual de 30%. Taxa de transferência de VPN 12M. Usuário ${user} ativo.`;
-    const insight = await getDashboardInsights(stats);
-    setAiInsight(insight);
-    setIsRefreshing(false);
+    // Gemini removed
+    setAiInsight('STATUS DO SISTEMA: ESTÁVEL | NÚCLEOS OPERACIONAIS');
   };
 
   const generateMockRequest = (typeOverride?: string) => {
