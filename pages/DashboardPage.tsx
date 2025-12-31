@@ -20,6 +20,8 @@ const DASHBOARD_DATA = [
   { name: 'QUA', value: 320, color: '#D35436' },
   { name: 'QUI', value: 355, color: '#22D3EE' },
   { name: 'SEX', value: 890, color: '#FFD700' },
+  { name: 'SÁB', value: 670, color: '#D35436' },
+  { name: 'DOM', value: 500, color: '#D1D5DB' },
 ];
 
 const RECENT_TASKS = [
