@@ -1,0 +1,9 @@
+
+{
+  "name": "Administrador Retro Brutalista",
+  "description": "Um painel administrativo de alto contraste e estilo industrial com estética retro-brutalista, apresentando visualização de dados e insights alimentados por IA.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
