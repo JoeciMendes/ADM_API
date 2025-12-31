@@ -10,8 +10,10 @@ import { DashboardView, RequestEntry } from '../types';
 interface DashboardPageProps {
   user: string;
   activeView: DashboardView;
+  isDarkMode: boolean;
   onViewChange: (view: DashboardView) => void;
   onLogout: () => void;
+  onToggleTheme: () => void;
 }
 
 const DASHBOARD_DATA = [
@@ -31,10 +33,11 @@ const RECENT_TASKS = [
   { id: 4, title: 'Implantação em staging', time: '4h' },
 ];
 
-const DashboardPage: React.FC<DashboardPageProps> = ({ user, activeView, onViewChange, onLogout }) => {
+const DashboardPage: React.FC<DashboardPageProps> = ({ user, activeView, isDarkMode, onViewChange, onLogout, onToggleTheme }) => {
   const [aiInsight, setAiInsight] = useState('SISTEMA OPERACIONAL: MONITORAMENTO ATIVO');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(window.innerWidth < 1200); // Auto-collapse em telas menores
   const [requestsList, setRequestsList] = useState<RequestEntry[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -750,12 +753,46 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user, activeView, onViewC
   );
 
   return (
-    <div className="min-h-screen flex text-brutal-black dark:text-gray-100">
-      <aside className={`w-64 bg-stone-900 text-gray-300 flex-shrink-0 flex flex-col border-r-4 border-brutal-black dark:border-gray-600 z-[60] transition-transform duration-300 md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} fixed h-full md:relative`}>
-        <div className="p-6 border-b-4 border-brutal-black dark:border-gray-600 bg-stone-800">
+    <div className="min-h-screen lg:h-screen lg:overflow-hidden flex text-brutal-black dark:text-gray-100">
+      {/* Mobile Overlay/Backdrop - Definitive Fix */}
+      <div
+        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[55] lg:hidden transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setIsMobileMenuOpen(false)}
+      />
+      <aside className={`
+        ${isSidebarCollapsed ? 'lg:w-20' : 'lg:w-64'} 
+        w-full lg:h-full 
+        bg-stone-900 text-gray-300 
+        flex-shrink-0 flex flex-col 
+        border-r-4 border-brutal-black dark:border-gray-600 
+        z-[70] transition-all duration-300 
+        lg:translate-x-0 
+        ${isMobileMenuOpen ? 'translate-x-0 shadow-[20px_0_50px_rgba(0,0,0,0.8)]' : '-translate-x-full'} 
+        fixed top-0 left-0 lg:relative overflow-hidden
+      `}>
+        <div className={`p-6 border-b-4 border-brutal-black dark:border-gray-600 bg-stone-800 flex items-center ${isSidebarCollapsed ? 'lg:justify-center' : 'justify-between'}`}>
           <div className="flex items-center gap-2 text-primary font-bold text-xl tracking-tighter">
             <span className="material-icons">grid_view</span>
-            <span>RETRO_UI</span>
+            {(!isSidebarCollapsed || (window.innerWidth < 1024)) && <span>RETRO_UI</span>}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={(e) => { e.stopPropagation(); setIsSidebarCollapsed(!isSidebarCollapsed); }}
+              className="hidden lg:flex items-center justify-center w-8 h-8 hover:bg-white/10 transition-colors"
+            >
+              <span className="material-icons text-sm">
+                {isSidebarCollapsed ? 'last_page' : 'first_page'}
+              </span>
+            </button>
+
+            {/* Mobile Close Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="lg:hidden p-2 text-primary hover:bg-white/10 transition-colors"
+            >
+              <span className="material-icons">close</span>
+            </button>
           </div>
         </div>
         <nav className="flex-1 p-4 space-y-2">
@@ -763,49 +800,62 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user, activeView, onViewC
             icon="dashboard"
             label="DASHBOARD"
             active={activeView === DashboardView.OVERVIEW}
+            collapsed={isSidebarCollapsed}
             onClick={() => { onViewChange(DashboardView.OVERVIEW); setIsMobileMenuOpen(false); }}
           />
           <NavItem
             icon="swap_horiz"
             label="REQUISIÇÕES"
             active={activeView === DashboardView.REQUESTS}
+            collapsed={isSidebarCollapsed}
             onClick={() => { onViewChange(DashboardView.REQUESTS); setIsMobileMenuOpen(false); }}
           />
           <NavItem
             icon="analytics"
             label="RELATÓRIOS"
             active={activeView === DashboardView.REPORTS}
+            collapsed={isSidebarCollapsed}
             onClick={() => { onViewChange(DashboardView.REPORTS); setIsMobileMenuOpen(false); }}
           />
           <NavItem
             icon="settings"
             label="CONFIGURAÇÕES"
             active={activeView === DashboardView.SETTINGS}
+            collapsed={isSidebarCollapsed}
             onClick={() => { onViewChange(DashboardView.SETTINGS); setIsMobileMenuOpen(false); }}
           />
           <NavItem
             icon="build"
             label="ADMIN"
             active={activeView === DashboardView.ADMIN}
+            collapsed={isSidebarCollapsed}
             onClick={() => { onViewChange(DashboardView.ADMIN); setIsMobileMenuOpen(false); }}
           />
         </nav>
         <button
           onClick={onLogout}
-          className="p-4 border-t-4 border-brutal-black dark:border-gray-600 bg-stone-800 text-xs text-red-400 font-bold flex items-center justify-center gap-2 hover:bg-stone-700 transition-colors uppercase"
+          className={`p-4 border-t-4 border-brutal-black dark:border-gray-600 bg-stone-800 text-xs text-red-400 font-bold flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-center gap-2'} hover:bg-stone-700 transition-colors uppercase`}
         >
           <span className="material-icons text-sm">logout</span>
-          Encerrar Sessão
+          {!isSidebarCollapsed && 'Encerrar Sessão'}
         </button>
         <div className="p-2 bg-stone-900 text-[10px] text-gray-500 text-center font-mono">
           v.1.0.4 BUILD 9921
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        <header className="h-20 flex items-center justify-between px-6 md:px-8 border-b-4 border-brutal-black dark:border-gray-600 bg-white dark:bg-gray-800 z-10 sticky top-0">
+      <main
+        className="flex-1 flex flex-col min-w-0 lg:h-full lg:overflow-y-auto relative"
+        onClick={() => {
+          if (isMobileMenuOpen) setIsMobileMenuOpen(false);
+        }}
+      >
+        <header className="h-20 flex items-center justify-between px-6 lg:px-8 border-b-4 border-brutal-black dark:border-gray-600 bg-white dark:bg-gray-800 z-10 sticky top-0">
           <div className="flex items-center gap-4">
-            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden p-2 border-2 border-black flex items-center justify-center">
+            <button
+              onClick={(e) => { e.stopPropagation(); setIsMobileMenuOpen(!isMobileMenuOpen); }}
+              className="lg:hidden p-2 border-2 border-black flex items-center justify-center bg-primary active:translate-y-0.5"
+            >
               <span className="material-icons">menu</span>
             </button>
             <h1 className="text-2xl md:text-3xl font-bold uppercase tracking-tight text-brutal-black dark:text-white">
@@ -822,11 +872,27 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user, activeView, onViewC
               <HeaderAction icon="notifications" />
               <span className="absolute top-1 right-1 w-3 h-3 bg-accent-orange border-2 border-white dark:border-gray-800 rounded-full"></span>
             </div>
+
+            {/* Integrated Theme Toggle */}
+            <button
+              onClick={onToggleTheme}
+              className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 border-2 border-transparent hover:border-black dark:hover:border-white transition-all rounded active:translate-y-0.5"
+              title="Trocar Tema"
+            >
+              <span className="material-icons text-black dark:text-white">
+                {isDarkMode ? 'light_mode' : 'contrast'}
+              </span>
+            </button>
+
             <button onClick={onLogout} className="p-2 hover:bg-retro-red hover:text-white border-2 border-transparent hover:border-black transition-all rounded active:translate-y-0.5" title="Sair">
               <span className="material-icons">logout</span>
             </button>
-            <div className="w-10 h-10 bg-primary border-2 border-brutal-black rounded-full flex items-center justify-center overflow-hidden shadow-brutal-sm cursor-pointer hover:scale-105 transition-transform" onClick={() => onViewChange(DashboardView.ADMIN)}>
-              <span className="material-icons text-black font-black">person</span>
+            <div className="w-10 h-10 bg-primary border-2 border-brutal-black rounded-full flex items-center justify-center overflow-hidden shadow-brutal-sm cursor-pointer hover:scale-110 transition-transform active:scale-95" onClick={() => onViewChange(DashboardView.ADMIN)} title="Ver Perfil">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="material-icons text-black font-black">person</span>
+              )}
             </div>
           </div>
         </header>
@@ -898,13 +964,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user, activeView, onViewC
   );
 };
 
-const NavItem: React.FC<{ icon: string; label: string; active?: boolean; onClick?: () => void }> = ({ icon, label, active, onClick }) => (
+const NavItem: React.FC<{ icon: string; label: string; active?: boolean; collapsed?: boolean; onClick?: () => void }> = ({ icon, label, active, collapsed, onClick }) => (
   <button
     onClick={onClick}
-    className={`w-full flex items-center gap-3 px-4 py-3 font-bold transition-all border-l-4 text-left ${active ? 'bg-primary text-black border-black shadow-brutal-sm translate-x-1' : 'text-gray-400 border-transparent hover:bg-stone-800 hover:text-white hover:border-gray-500'}`}
+    title={collapsed ? label : undefined}
+    className={`w-full flex items-center ${collapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-3 font-bold transition-all border-l-4 text-left ${active ? 'bg-primary text-black border-black shadow-brutal-sm translate-x-1' : 'text-gray-400 border-transparent hover:bg-stone-800 hover:text-white hover:border-gray-500'}`}
   >
     <span className="material-icons">{icon}</span>
-    <span className="tracking-tighter">{label}</span>
+    {!collapsed && <span className="tracking-tighter">{label}</span>}
   </button>
 );
 

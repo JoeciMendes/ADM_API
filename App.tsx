@@ -93,26 +93,14 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen relative concrete-texture">
-      {/* Theme Toggle Button */}
-      <button
-        onClick={toggleTheme}
-        className="fixed top-6 right-6 z-50 p-2 bg-white dark:bg-zinc-800 border-2 border-black dark:border-white shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all duration-150 flex items-center justify-center"
-      >
-        <span className="material-icons text-black dark:text-white">
-          {state.isDarkMode ? 'light_mode' : 'contrast'}
-        </span>
-      </button>
-
-      {state.currentPage === Page.LOGIN && (
-        <LoginPage onLogin={handleLogin} />
-      )}
-
       {state.currentPage === Page.DASHBOARD && (
         <DashboardPage
           user={state.user || 'Admin'}
           activeView={state.currentView}
+          isDarkMode={state.isDarkMode}
           onViewChange={handleViewChange}
           onLogout={openLogoutModal}
+          onToggleTheme={toggleTheme}
         />
       )}
 
