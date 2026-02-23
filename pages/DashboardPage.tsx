@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 import BrutalCard from '../components/BrutalCard';
 import BrutalButton from '../components/BrutalButton';
-import { supabase } from '../services/supabase';
+import { getActivityLogs, getCurrentUser, getProfile, updatePassword, upsertProfile } from '../services/appwrite';
 import { DashboardView, RequestEntry } from '../types';
 // import { getDashboardInsights } from '../services/geminiService';
 
@@ -56,16 +56,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user, activeView, isDarkM
 
   const fetchProfile = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error;
+      const data = await getProfile(user.id);
 
       if (data) {
         setFullName(data.full_name || user.email?.split('@')[0].toUpperCase() || 'USUÁRIO');
@@ -81,17 +75,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user, activeView, isDarkM
 
   const fetchLogs = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from('activity_logs')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
+      const data = await getActivityLogs(user.id, 10);
       if (data) setLogs(data);
     } catch (err) {
       console.error('Erro ao buscar logs:', err);
@@ -101,19 +88,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user, activeView, isDarkM
   const handleUpdateProfile = async () => {
     setLoadingProfile(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) return;
 
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          full_name: fullName,
-          role: role,
-          updated_at: new Date().toISOString(),
-        });
+      await upsertProfile(user.id, {
+        full_name: fullName,
+        role: role,
+      });
 
-      if (error) throw error;
       setIsEditing(false);
     } catch (err) {
       console.error('Erro ao atualizar perfil:', err);
@@ -133,12 +115,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user, activeView, isDarkM
 
         // Persistir a URL (base64 para simplicidade neste MVP, ideal seria Storage)
         try {
-          const { data: { user } } = await supabase.auth.getUser();
+          const user = await getCurrentUser();
           if (user) {
-            await supabase.from('profiles').upsert({
-              id: user.id,
+            await upsertProfile(user.id, {
               avatar_url: base64,
-              updated_at: new Date().toISOString()
             });
           }
         } catch (err) {
@@ -643,9 +623,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user, activeView, isDarkM
                     onClick={async () => {
                       const newPass = prompt('Digite a nova senha:');
                       if (newPass) {
-                        const { error } = await supabase.auth.updateUser({ password: newPass });
-                        if (error) alert('Erro ao trocar senha: ' + error.message);
-                        else alert('Senha atualizada com sucesso!');
+                        try {
+                          await updatePassword(newPass);
+                          alert('Senha atualizada com sucesso!');
+                        } catch (error: any) {
+                          alert('Erro ao trocar senha: ' + (error?.message || 'erro inesperado'));
+                        }
                       }
                     }}
                     className="flex-1 md:flex-none px-6 py-3 bg-white dark:bg-zinc-700 border-2 border-black font-bold uppercase text-xs shadow-brutal-sm hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all"

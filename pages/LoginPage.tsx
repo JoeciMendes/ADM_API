@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import BrutalInput from '../components/BrutalInput';
 import BrutalButton from '../components/BrutalButton';
-import { supabase } from '../services/supabase';
+import { signIn, signUp } from '../services/appwrite';
 
 interface LoginPageProps {
   onLogin: (user: string) => void;
@@ -22,20 +22,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
     try {
       if (isSignUp) {
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password: pass,
-        });
-        if (signUpError) throw signUpError;
-        alert('Cadastro realizado! Por favor, verifique seu e-mail para confirmar a conta.');
+        await signUp(email, pass);
+        alert('Cadastro realizado! Faça login para continuar.');
       } else {
-        const { data, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password: pass,
-        });
-        if (signInError) throw signInError;
-        if (data.user) {
-          onLogin(data.user.email || 'Usuário');
+        const user = await signIn(email, pass);
+        if (user) {
+          onLogin(user.email || 'Usuário');
         }
       }
     } catch (err: any) {
