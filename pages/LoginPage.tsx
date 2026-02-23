@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import BrutalInput from '../components/BrutalInput';
 import BrutalButton from '../components/BrutalButton';
-import { signIn, signUp } from '../services/appwrite';
+import { getAuthErrorMessage, signIn, signUp } from '../services/appwrite';
 
 interface LoginPageProps {
   onLogin: (user: string) => void;
@@ -18,20 +18,47 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      setError('Informe um e-mail.');
+      return;
+    }
+
+    if (pass.length < 8) {
+      setError('A senha deve ter pelo menos 8 caracteres.');
+      return;
+    }
+
     setLoading(true);
 
     try {
       if (isSignUp) {
-        await signUp(email, pass);
-        alert('Cadastro realizado! Faça login para continuar.');
+        await signUp(normalizedEmail, pass);
+
+        try {
+          const user = await signIn(normalizedEmail, pass);
+          if (user) {
+            onLogin(user.email || 'Usuário');
+            return;
+          }
+        } catch {
+          alert('Cadastro realizado! Agora faça login para continuar.');
+          setIsSignUp(false);
+          return;
+        }
+
+        alert('Cadastro realizado! Agora faça login para continuar.');
+        setIsSignUp(false);
       } else {
-        const user = await signIn(email, pass);
+        const user = await signIn(normalizedEmail, pass);
         if (user) {
           onLogin(user.email || 'Usuário');
         }
       }
     } catch (err: any) {
-      setError(err.message || 'Ocorreu um erro inesperado.');
+      setError(getAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -79,6 +106,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               icon="lock"
               value={pass}
               onChange={(e) => setPass(e.target.value)}
+              minLength={8}
+              required
             />
 
             <div className="pt-4">

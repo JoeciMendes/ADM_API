@@ -46,6 +46,44 @@ export interface ActivityLog {
   status: string;
 }
 
+export const getAuthErrorMessage = (error: any) => {
+  const message = String(error?.message ?? '').toLowerCase();
+  const type = String(error?.type ?? '').toLowerCase();
+
+  if (type === 'user_already_exists' || message.includes('already exists')) {
+    return 'Este e-mail já está cadastrado.';
+  }
+
+  if (
+    type === 'user_invalid_credentials' ||
+    message.includes('invalid credentials') ||
+    message.includes('invalid email or password')
+  ) {
+    return 'E-mail ou senha inválidos.';
+  }
+
+  if (
+    message.includes('password') &&
+    (message.includes('8') || message.includes('short') || message.includes('length'))
+  ) {
+    return 'A senha deve ter pelo menos 8 caracteres.';
+  }
+
+  if (message.includes('email') && message.includes('invalid')) {
+    return 'Digite um e-mail válido.';
+  }
+
+  if (message.includes('guests are not allowed') || message.includes('missing scope')) {
+    return 'Cadastro bloqueado no Appwrite. Habilite o registro de usuários nas configurações de Auth.';
+  }
+
+  if (type === 'user_email_not_verified' || message.includes('not verified')) {
+    return 'E-mail ainda não verificado. Verifique sua caixa de entrada para continuar.';
+  }
+
+  return error?.message || 'Ocorreu um erro inesperado.';
+};
+
 export const signUp = async (email: string, password: string) => {
   return account.create(ID.unique(), email, password);
 };
