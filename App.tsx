@@ -93,6 +93,10 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen relative concrete-texture">
+      {state.currentPage === Page.LOGIN && (
+        <LoginPage onLogin={handleLogin} />
+      )}
+
       {state.currentPage === Page.DASHBOARD && (
         <DashboardPage
           user={state.user || 'Admin'}
